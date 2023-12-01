@@ -7,7 +7,7 @@ pub fn part_one(input: &str) -> Option<u32> {
             .filter_map(|l| {
                 let first = l.chars().find(char::is_ascii_digit);
                 let last = l.chars().rfind(char::is_ascii_digit);
-                format!("{}{}", first?, last?).parse::<u32>().ok()
+                Some(first?.to_digit(10)? * 10 + last?.to_digit(10)?)
             })
             .sum(),
     )
@@ -18,9 +18,9 @@ pub fn part_two(input: &str) -> Option<u32> {
         input
             .lines()
             .filter_map(|l| {
-                let start = (0..l.len()).find_map(|i| find_pattern(l, i, false))?;
-                let end = (0..l.len()).find_map(|i| find_pattern(l, i, true))?;
-                format!("{}{}", start, end).parse::<u32>().ok()
+                let first = (0..l.len()).find_map(|i| find_pattern(l, i, false))?;
+                let last = (0..l.len()).find_map(|i| find_pattern(l, i, true))?;
+                Some(first.to_digit(10)? * 10 + last.to_digit(10)?)
             })
             .sum(),
     )
