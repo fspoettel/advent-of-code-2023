@@ -49,7 +49,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                 if game
                     .rolls
                     .iter()
-                    .all(|round| round.r <= 14 && round.g <= 13 && round.b <= 12)
+                    .all(|round| round.r <= 12 && round.g <= 13 && round.b <= 14)
                 {
                     Some(game.id)
                 } else {
