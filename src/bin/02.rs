@@ -37,12 +37,13 @@ pub fn part_one(input: &str) -> Option<u32> {
         input
             .lines()
             .filter_map(|l| {
-                let game = parse_game(l)?;
-                if game.r_max <= 12 && game.g_max <= 13 && game.b_max <= 14 {
-                    Some(game.id)
-                } else {
-                    None
-                }
+                parse_game(l).and_then(|game| {
+                    if game.r_max <= 12 && game.g_max <= 13 && game.b_max <= 14 {
+                        Some(game.id)
+                    } else {
+                        None
+                    }
+                })
             })
             .sum(),
     )
@@ -52,10 +53,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     Some(
         input
             .lines()
-            .filter_map(|l| {
-                let game = parse_game(l)?;
-                Some(game.r_max * game.g_max * game.b_max)
-            })
+            .filter_map(|l| parse_game(l).map(|game| game.r_max * game.g_max * game.b_max))
             .sum(),
     )
 }
