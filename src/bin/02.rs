@@ -1,45 +1,45 @@
 advent_of_code::solution!(2);
 
 struct Game {
-    id: u32,
     r_max: u32,
     g_max: u32,
     b_max: u32,
 }
 
 fn parse_game(line: &str) -> Option<Game> {
-    let (id_s, rolls_s) = line.split_once(": ")?;
-
     let mut game = Game {
-        id: id_s.split_once(' ')?.1.parse().ok()?,
         r_max: 0,
         g_max: 0,
         b_max: 0,
     };
 
-    rolls_s.split([',', ';']).try_for_each(|roll_s| {
-        let (count_s, color_s) = roll_s.trim().split_once(' ')?;
-        let count = count_s.parse().ok()?;
-        match color_s.as_bytes().first()? {
-            b'r' => game.r_max = std::cmp::max(count, game.r_max),
-            b'g' => game.g_max = std::cmp::max(count, game.g_max),
-            b'b' => game.b_max = std::cmp::max(count, game.b_max),
-            _ => unreachable!(),
-        };
-        Some(())
-    });
+    line.split_once(": ")?
+        .1
+        .split([',', ';'])
+        .try_for_each(|roll_s| {
+            let (count_s, color_s) = roll_s.trim().split_once(' ')?;
+            let count = count_s.parse().ok()?;
+            match color_s.as_bytes().first()? {
+                b'r' => game.r_max = std::cmp::max(count, game.r_max),
+                b'g' => game.g_max = std::cmp::max(count, game.g_max),
+                b'b' => game.b_max = std::cmp::max(count, game.b_max),
+                _ => unreachable!(),
+            };
+            Some(())
+        });
 
     Some(game)
 }
 
-pub fn part_one(input: &str) -> Option<u32> {
+pub fn part_one(input: &str) -> Option<usize> {
     Some(
         input
             .lines()
-            .filter_map(|l| {
+            .enumerate()
+            .filter_map(|(i, l)| {
                 parse_game(l).and_then(|game| {
                     if game.r_max <= 12 && game.g_max <= 13 && game.b_max <= 14 {
-                        Some(game.id)
+                        Some(i + 1)
                     } else {
                         None
                     }
