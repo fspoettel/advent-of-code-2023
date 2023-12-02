@@ -1,43 +1,35 @@
 advent_of_code::solution!(2);
 
-struct Roll {
-    r: u32,
-    g: u32,
-    b: u32,
-}
-
 struct Game {
     id: u32,
-    rolls: Vec<Roll>,
+    r_max: u32,
+    g_max: u32,
+    b_max: u32,
 }
 
 fn parse_game(line: &str) -> Option<Game> {
     let (id_s, rolls_s) = line.split_once(": ")?;
 
-    let id = id_s.split_once(' ')?.1.parse().ok()?;
+    let mut game = Game {
+        id: id_s.split_once(' ')?.1.parse().ok()?,
+        r_max: 0,
+        g_max: 0,
+        b_max: 0,
+    };
 
-    let rolls = rolls_s
-        .split("; ")
-        .map(|rolls_s| {
-            let mut roll = Roll { r: 0, g: 0, b: 0 };
+    rolls_s.split([',', ';']).try_for_each(|roll_s| {
+        let (count_s, color_s) = roll_s.trim().split_once(' ')?;
+        let count = count_s.parse().ok()?;
+        match color_s.as_bytes().first()? {
+            b'r' => game.r_max = std::cmp::max(count, game.r_max),
+            b'g' => game.g_max = std::cmp::max(count, game.g_max),
+            b'b' => game.b_max = std::cmp::max(count, game.b_max),
+            _ => unreachable!(),
+        };
+        Some(())
+    });
 
-            rolls_s.split(", ").try_for_each(|colors_str| {
-                let (roll_s, color_s) = colors_str.split_once(' ')?;
-                let count = roll_s.parse().ok()?;
-                match color_s.chars().next()? {
-                    'r' => roll.r = count,
-                    'g' => roll.g = count,
-                    'b' => roll.b = count,
-                    _ => unreachable!(),
-                };
-                Some(())
-            });
-
-            roll
-        })
-        .collect();
-
-    Some(Game { id, rolls })
+    Some(game)
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -46,11 +38,7 @@ pub fn part_one(input: &str) -> Option<u32> {
             .lines()
             .filter_map(|l| {
                 let game = parse_game(l)?;
-                if game
-                    .rolls
-                    .iter()
-                    .all(|round| round.r <= 12 && round.g <= 13 && round.b <= 14)
-                {
+                if game.r_max <= 12 && game.g_max <= 13 && game.b_max <= 14 {
                     Some(game.id)
                 } else {
                     None
@@ -65,16 +53,8 @@ pub fn part_two(input: &str) -> Option<u32> {
         input
             .lines()
             .filter_map(|l| {
-                let bag = parse_game(l)?.rolls.iter().fold(
-                    Roll { r: 0, g: 0, b: 0 },
-                    |mut bag, &Roll { r, g, b }| {
-                        bag.r = std::cmp::max(bag.r, r);
-                        bag.g = std::cmp::max(bag.g, g);
-                        bag.b = std::cmp::max(bag.b, b);
-                        bag
-                    },
-                );
-                Some(bag.r * bag.g * bag.b)
+                let game = parse_game(l)?;
+                Some(game.r_max * game.g_max * game.b_max)
             })
             .sum(),
     )
