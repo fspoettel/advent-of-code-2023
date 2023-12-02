@@ -14,34 +14,30 @@ struct Game {
 fn parse_game(line: &str) -> Option<Game> {
     let (id_s, rolls_s) = line.split_once(": ")?;
 
-    let game = Game {
-        id: id_s.split_once(' ')?.1.parse().ok()?,
-        rolls: rolls_s
-            .split("; ")
-            .map(|rolls_s| {
-                let mut roll = Roll { r: 0, g: 0, b: 0 };
+    let id = id_s.split_once(' ')?.1.parse().ok()?;
 
-                rolls_s.split(", ").try_for_each(|colors_str| {
-                    let (roll_s, color_s) = colors_str.split_once(' ')?;
+    let rolls = rolls_s
+        .split("; ")
+        .map(|rolls_s| {
+            let mut roll = Roll { r: 0, g: 0, b: 0 };
 
-                    let count = roll_s.parse().ok()?;
+            rolls_s.split(", ").try_for_each(|colors_str| {
+                let (roll_s, color_s) = colors_str.split_once(' ')?;
+                let count = roll_s.parse().ok()?;
+                match color_s.chars().next()? {
+                    'r' => roll.r = count,
+                    'g' => roll.g = count,
+                    'b' => roll.b = count,
+                    _ => unreachable!(),
+                };
+                Some(())
+            });
 
-                    match color_s.chars().next()? {
-                        'r' => roll.r = count,
-                        'g' => roll.g = count,
-                        'b' => roll.b = count,
-                        _ => unreachable!(),
-                    };
+            roll
+        })
+        .collect();
 
-                    Some(())
-                });
-
-                roll
-            })
-            .collect(),
-    };
-
-    Some(game)
+    Some(Game { id, rolls })
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -52,7 +48,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                 let game = parse_game(l)?;
                 if game
                     .rolls
-                    .into_iter()
+                    .iter()
                     .all(|round| round.r <= 14 && round.g <= 13 && round.b <= 12)
                 {
                     Some(game.id)
