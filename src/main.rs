@@ -4,7 +4,7 @@ use args::{parse, AppArguments};
 mod args {
     use std::process;
 
-    use advent_of_code::Day;
+    use advent_of_code::template::Day;
 
     pub enum AppArguments {
         Download {
