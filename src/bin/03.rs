@@ -1,4 +1,6 @@
-use advent_of_code::helpers::matrix::{Direction, Matrix};
+use std::collections::VecDeque;
+
+use advent_of_code::helpers::matrix::{Cell, Direction, Matrix};
 
 advent_of_code::solution!(3);
 
@@ -8,11 +10,13 @@ pub fn part_one(input: &str) -> Option<u32> {
     let mut curr = String::new();
 
     Some(matrix.items().fold(0, |mut acc, cell| {
-        if cell.val.is_ascii_digit() {
+        let is_digit = cell.val.is_ascii_digit();
+
+        if is_digit {
             curr.push(cell.val);
         }
 
-        if !curr.is_empty() && (!cell.val.is_ascii_digit() || cell.x == matrix.w() - 1) {
+        if (!is_digit || cell.x == matrix.w - 1) && !curr.is_empty() {
             if matrix
                 .area(
                     (cell.x - curr.len()).saturating_sub(1),
@@ -60,7 +64,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 
             let nums: Vec<u32> = neighbours
                 .into_iter()
-                .filter_map(|cell| matrix.walk_digits(cell))
+                .filter_map(|cell| walk_digits(&matrix, cell))
                 .collect();
 
             if nums.len() == 2 {
@@ -72,6 +76,51 @@ pub fn part_two(input: &str) -> Option<u32> {
     });
 
     Some(sum)
+}
+
+fn walk_digits(matrix: &Matrix, cell: Option<Cell>) -> Option<u32> {
+    let cell = cell?;
+    if !cell.val.is_ascii_digit() {
+        return None;
+    }
+
+    let mut curr = VecDeque::from([cell.val]);
+    let mut i = 1;
+    let mut walk_left = true;
+    let mut walk_right = true;
+
+    while walk_left || walk_right {
+        if walk_left {
+            let c = cell
+                .x
+                .checked_sub(i)
+                .and_then(|x| matrix.get(x, cell.y))
+                .unwrap_or('.');
+
+            if c.is_ascii_digit() {
+                curr.push_front(c);
+            } else {
+                walk_left = false;
+            }
+        }
+
+        if walk_right {
+            let c = matrix.get(cell.x + i, cell.y).unwrap_or('.');
+            if c.is_ascii_digit() {
+                curr.push_back(c);
+            } else {
+                walk_right = false;
+            }
+        }
+
+        i += 1;
+    }
+
+    if !curr.is_empty() {
+        String::from_iter(curr.iter()).parse().ok()
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]

@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use itertools::Itertools;
 
 pub enum Direction {
@@ -21,46 +19,44 @@ pub struct Cell {
 
 pub struct Matrix {
     pub cells: Vec<Vec<char>>,
+    pub w: usize,
+    pub h: usize,
 }
 
 impl From<&str> for Matrix {
     fn from(s: &str) -> Self {
+        let cells: Vec<Vec<char>> = s
+            .lines()
+            .filter_map(|l| {
+                if !l.is_empty() {
+                    Some(l.chars().collect())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
         Self {
-            cells: s
-                .lines()
-                .filter_map(|l| {
-                    if !l.is_empty() {
-                        Some(l.chars().collect())
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
+            w: cells[0].len(),
+            h: cells.len(),
+            cells,
         }
     }
 }
 
 impl Matrix {
-    pub fn w(&self) -> usize {
-        self.cells[0].len()
-    }
-
-    pub fn h(&self) -> usize {
-        self.cells.len()
-    }
-
     pub fn get(&self, x: usize, y: usize) -> Option<char> {
         self.cells.get(y).and_then(|l| l.get(x).copied())
     }
 
+    pub fn get_cell(&self, x: usize, y: usize) -> Option<Cell> {
+        self.get(x, y).map(|val| Cell { x, y, val })
+    }
+
     pub fn items(&self) -> impl Iterator<Item = Cell> + '_ {
-        (0..self.h())
-            .cartesian_product(0..self.w())
-            .map(|(y, x)| Cell {
-                val: self.get(x, y).unwrap(),
-                x,
-                y,
-            })
+        (0..self.h)
+            .cartesian_product(0..self.w)
+            .map(|(y, x)| self.get_cell(x, y).unwrap())
     }
 
     pub fn neighbour(&self, cell: &Cell, dir: &Direction) -> Option<Cell> {
@@ -69,49 +65,49 @@ impl Matrix {
                 let y = cell.y.checked_sub(1)?;
                 let x = cell.x.checked_sub(1)?;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
             Direction::N => {
                 let x = cell.x;
                 let y = cell.y.checked_sub(1)?;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
             Direction::NE => {
                 let x = cell.x + 1;
                 let y = cell.y.checked_sub(1)?;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
             Direction::W => {
                 let x = cell.x.checked_sub(1)?;
                 let y = cell.y;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
             Direction::E => {
                 let x = cell.x + 1;
                 let y = cell.y;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
             Direction::SW => {
                 let x = cell.x.checked_sub(1)?;
                 let y = cell.y + 1;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
             Direction::S => {
                 let y = cell.y + 1;
                 let x = cell.x;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
             Direction::SE => {
                 let x = cell.x + 1;
                 let y = cell.y + 1;
                 let val = self.get(x, y)?;
-                Some(Cell { val, x, y })
+                Some(Cell { x, y, val })
             }
         }
     }
@@ -125,51 +121,6 @@ impl Matrix {
     ) -> impl Iterator<Item = Cell> + '_ {
         (y1..=y2)
             .cartesian_product(x1..=x2)
-            .filter_map(|(y, x)| self.get(x, y).map(|val| Cell { val, x, y }))
-    }
-
-    pub fn walk_digits(&self, cell: Option<Cell>) -> Option<u32> {
-        let cell = cell?;
-        if !cell.val.is_ascii_digit() {
-            return None;
-        }
-
-        let mut curr = VecDeque::from([cell.val]);
-        let mut i = 1;
-        let mut walk_left = true;
-        let mut walk_right = true;
-
-        while walk_left || walk_right {
-            if walk_left {
-                let c = cell
-                    .x
-                    .checked_sub(i)
-                    .and_then(|x| self.get(x, cell.y))
-                    .unwrap_or('.');
-
-                if c.is_ascii_digit() {
-                    curr.push_front(c);
-                } else {
-                    walk_left = false;
-                }
-            }
-
-            if walk_right {
-                let c = self.get(cell.x + i, cell.y).unwrap_or('.');
-                if c.is_ascii_digit() {
-                    curr.push_back(c);
-                } else {
-                    walk_right = false;
-                }
-            }
-
-            i += 1;
-        }
-
-        if !curr.is_empty() {
-            String::from_iter(curr.iter()).parse().ok()
-        } else {
-            None
-        }
+            .filter_map(|(y, x)| self.get(x, y).map(|val| Cell { x, y, val }))
     }
 }
