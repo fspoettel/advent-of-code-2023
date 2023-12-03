@@ -13,14 +13,14 @@ pub enum Direction {
 
 pub struct Cell {
     pub val: char,
-    pub x: usize,
-    pub y: usize,
+    pub col: usize,
+    pub row: usize,
 }
 
 pub struct Matrix {
     pub cells: Vec<Vec<char>>,
-    pub w: usize,
-    pub h: usize,
+    pub cols: usize,
+    pub rows: usize,
 }
 
 impl From<&str> for Matrix {
@@ -37,90 +37,90 @@ impl From<&str> for Matrix {
             .collect();
 
         Self {
-            w: cells[0].len(),
-            h: cells.len(),
+            cols: cells[0].len(),
+            rows: cells.len(),
             cells,
         }
     }
 }
 
 impl Matrix {
-    pub fn get(&self, x: usize, y: usize) -> Option<char> {
-        self.cells.get(y).and_then(|l| l.get(x).copied())
+    pub fn get(&self, row: usize, col: usize) -> Option<char> {
+        self.cells.get(row).and_then(|l| l.get(col).copied())
     }
 
-    pub fn get_cell(&self, x: usize, y: usize) -> Option<Cell> {
-        self.get(x, y).map(|val| Cell { x, y, val })
+    pub fn get_cell(&self, row: usize, col: usize) -> Option<Cell> {
+        self.get(row, col).map(|val| Cell { col, row, val })
     }
 
     pub fn items(&self) -> impl Iterator<Item = Cell> + '_ {
-        (0..self.h)
-            .cartesian_product(0..self.w)
-            .map(|(y, x)| self.get_cell(x, y).unwrap())
+        (0..self.rows)
+            .cartesian_product(0..self.cols)
+            .map(|(row, col)| self.get_cell(row, col).unwrap())
     }
 
     pub fn neighbour(&self, cell: &Cell, dir: &Direction) -> Option<Cell> {
         match dir {
             Direction::NW => {
-                let y = cell.y.checked_sub(1)?;
-                let x = cell.x.checked_sub(1)?;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let row = cell.row.checked_sub(1)?;
+                let col = cell.col.checked_sub(1)?;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
             Direction::N => {
-                let x = cell.x;
-                let y = cell.y.checked_sub(1)?;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let col = cell.col;
+                let row = cell.row.checked_sub(1)?;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
             Direction::NE => {
-                let x = cell.x + 1;
-                let y = cell.y.checked_sub(1)?;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let col = cell.col + 1;
+                let row = cell.row.checked_sub(1)?;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
             Direction::W => {
-                let x = cell.x.checked_sub(1)?;
-                let y = cell.y;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let col = cell.col.checked_sub(1)?;
+                let row = cell.row;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
             Direction::E => {
-                let x = cell.x + 1;
-                let y = cell.y;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let col = cell.col + 1;
+                let row = cell.row;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
             Direction::SW => {
-                let x = cell.x.checked_sub(1)?;
-                let y = cell.y + 1;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let col = cell.col.checked_sub(1)?;
+                let row = cell.row + 1;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
             Direction::S => {
-                let y = cell.y + 1;
-                let x = cell.x;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let row = cell.row + 1;
+                let col = cell.col;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
             Direction::SE => {
-                let x = cell.x + 1;
-                let y = cell.y + 1;
-                let val = self.get(x, y)?;
-                Some(Cell { x, y, val })
+                let col = cell.col + 1;
+                let row = cell.row + 1;
+                let val = self.get(row, col)?;
+                Some(Cell { col, row, val })
             }
         }
     }
 
     pub fn area(
         &self,
-        x1: usize,
-        x2: usize,
-        y1: usize,
-        y2: usize,
+        col_start: usize,
+        col_end: usize,
+        row_start: usize,
+        row_end: usize,
     ) -> impl Iterator<Item = Cell> + '_ {
-        (y1..=y2)
-            .cartesian_product(x1..=x2)
-            .filter_map(|(y, x)| self.get(x, y).map(|val| Cell { x, y, val }))
+        (row_start..=row_end)
+            .cartesian_product(col_start..=col_end)
+            .filter_map(|(row, col)| self.get(row, col).map(|val| Cell { col, row, val }))
     }
 }
