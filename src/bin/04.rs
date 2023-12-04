@@ -1,20 +1,22 @@
-use hashbrown::HashSet;
-
 advent_of_code::solution!(4);
 
-type Card<'a> = (HashSet<&'a str>, HashSet<&'a str>);
+type Card<'a> = (Vec<u32>, Vec<u32>);
 
 fn parse_card(line: &str) -> Option<Card> {
     line.split_once(':')?.1.split_once('|').map(|(a, b)| {
         (
-            a.split_whitespace().collect(),
-            b.split_whitespace().collect(),
+            a.split_ascii_whitespace()
+                .map(|s| s.parse().unwrap())
+                .collect(),
+            b.split_ascii_whitespace()
+                .map(|s| s.parse().unwrap())
+                .collect(),
         )
     })
 }
 
 fn count_hits(card: &Card) -> usize {
-    card.0.intersection(&card.1).count()
+    card.0.iter().filter(|c| card.1.contains(c)).count()
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -35,7 +37,7 @@ pub fn part_two(input: &str) -> Option<usize> {
 
     cards.iter().enumerate().for_each(|(i, card)| {
         let hits = count_hits(card);
-        for j in (i + 1)..(i + 1 + hits) {
+        for j in (i + 1)..=(i + hits) {
             counts[j] += counts[i];
         }
     });
