@@ -1,3 +1,4 @@
+use hashbrown::HashSet;
 use itertools::Itertools;
 
 advent_of_code::solution!(4);
@@ -7,8 +8,9 @@ fn parse_card(line: &str) -> Option<(&str, &str)> {
 }
 
 fn count_hits(card: &(&str, &str)) -> usize {
-    let b = card.0.split_whitespace().collect_vec();
-    card.1.split_whitespace().filter(|s| b.contains(s)).count()
+    let a: HashSet<&str> = card.0.split_whitespace().collect();
+    let b: HashSet<&str> = card.1.split_whitespace().collect();
+    a.intersection(&b).count()
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
