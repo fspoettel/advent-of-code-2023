@@ -2,58 +2,37 @@ use itertools::Itertools;
 
 advent_of_code::solution!(5);
 
-#[derive(Debug)]
 struct Range {
     length: usize,
     source_start: usize,
     destination_start: usize,
 }
 
-#[derive(Debug)]
-struct Map {
-    source: String,
-    destination: String,
-    index: Vec<Range>,
-}
-
-impl TryFrom<&str> for Map {
-    type Error = &'static str;
-
-    fn try_from(chunk: &str) -> Result<Self, Self::Error> {
-        let mut source = None;
-        let mut destination = None;
-        let mut index = vec![];
-
-        chunk.lines().try_for_each(|l| {
-            if l.chars().next().is_some_and(|c| c.is_ascii_alphabetic()) {
-                let (from_s, to_s) = l.split_once(' ')?.0.split_once("-to-")?;
-                source = Some(from_s);
-                destination = Some(to_s);
+fn parse_map(chunk: &str) -> Option<Vec<Range>> {
+    let ranges: Vec<Range> = chunk
+        .lines()
+        .filter_map(|l| {
+            if l.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+                let mut splits = l.split(' ').filter_map(|x| x.parse::<usize>().ok());
+                Some(Range {
+                    destination_start: splits.next()?,
+                    source_start: splits.next()?,
+                    length: splits.next()?,
+                })
             } else {
-                let mut splits = l.split(' ');
-                let destination_start = splits.next().and_then(|x| x.parse().ok())?;
-                let source_start = splits.next().and_then(|x| x.parse().ok())?;
-                let length = splits.next().and_then(|x| x.parse().ok())?;
-
-                index.push(Range {
-                    source_start,
-                    destination_start,
-                    length,
-                });
+                None
             }
-
-            Some(())
-        });
-
-        Ok(Self {
-            source: source.ok_or("could not parse `from`.")?.to_string(),
-            destination: destination.ok_or("could not parse `to`.")?.to_string(),
-            index,
         })
+        .collect_vec();
+
+    if ranges.is_empty() {
+        None
+    } else {
+        Some(ranges)
     }
 }
 
-fn parse(input: &str) -> Option<(Vec<usize>, Vec<Map>)> {
+fn parse(input: &str) -> Option<(Vec<usize>, Vec<Vec<Range>>)> {
     let seeds = input
         .lines()
         .next()?
@@ -66,38 +45,37 @@ fn parse(input: &str) -> Option<(Vec<usize>, Vec<Map>)> {
     let maps = input
         .split("\n\n")
         .skip(1)
-        .filter_map(|chunk| Map::try_from(chunk).ok())
+        .filter_map(parse_map)
         .collect_vec();
 
     Some((seeds, maps))
 }
 
-pub fn part_one(input: &str) -> Option<usize> {
-    let (seeds, maps) = parse(input)?;
+fn map_seed(seed: usize, maps: &[Vec<Range>]) -> usize {
+    maps.iter().fold(seed, |acc, map| {
+        let range = map
+            .iter()
+            .find(|range| acc >= range.source_start && acc < (range.source_start + range.length));
 
-    seeds
-        .into_iter()
-        .map(|seed| {
-            maps.iter().fold(seed, |acc, map| {
-                let range = map.index
-                    .iter()
-                    .find(|range| {
-                        acc > range.source_start && acc <= (range.source_start + range.length)
-                    });
-
-                match range {
-                    Some(range) => {
-                        acc - range.source_start + range.destination_start
-                    },
-                    None => acc
-                }
-            })
-        })
-        .min()
+        match range {
+            Some(range) => acc - range.source_start + range.destination_start,
+            None => acc,
+        }
+    })
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_one(input: &str) -> Option<usize> {
+    let (seeds, maps) = parse(input)?;
+    seeds.into_iter().map(|seed| map_seed(seed, &maps)).min()
+}
+
+pub fn part_two(input: &str) -> Option<usize> {
+    let (seeds, maps) = parse(input)?;
+    seeds
+        .chunks(2)
+        .map(|vals| ((vals[0] - 1)..(vals[0] + vals[1])))
+        .flat_map(|r| r.into_iter().map(|seed| map_seed(seed, &maps)))
+        .min()
 }
 
 #[cfg(test)]
@@ -113,6 +91,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(46));
     }
 }
