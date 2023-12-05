@@ -51,31 +51,58 @@ fn parse(input: &str) -> Option<(Vec<usize>, Vec<Vec<Range>>)> {
     Some((seeds, maps))
 }
 
-fn map_seed(seed: usize, maps: &[Vec<Range>]) -> usize {
-    maps.iter().fold(seed, |acc, map| {
-        let range = map
-            .iter()
-            .find(|range| acc >= range.source_start && acc < (range.source_start + range.length));
-
-        match range {
-            Some(range) => acc - range.source_start + range.destination_start,
-            None => acc,
-        }
-    })
-}
-
 pub fn part_one(input: &str) -> Option<usize> {
     let (seeds, maps) = parse(input)?;
-    seeds.into_iter().map(|seed| map_seed(seed, &maps)).min()
+    seeds
+        .into_iter()
+        .map(|seed| {
+            maps.iter().fold(seed, |acc, map| {
+                let range = map.iter().find(|range| {
+                    acc >= range.source_start && acc < (range.source_start + range.length)
+                });
+
+                match range {
+                    Some(range) => acc - range.source_start + range.destination_start,
+                    None => acc,
+                }
+            })
+        })
+        .min()
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
     let (seeds, maps) = parse(input)?;
-    seeds
+
+    let ranges: Vec<(usize, usize)> = seeds
         .chunks(2)
-        .map(|vals| ((vals[0] - 1)..(vals[0] + vals[1])))
-        .flat_map(|r| r.into_iter().map(|seed| map_seed(seed, &maps)))
-        .min()
+        .map(|vals| {
+            let x = vals[0] - 1;
+            let y = x + vals[1];
+            (x, y)
+        })
+        .collect_vec();
+
+    for i in 0..usize::MAX {
+        let start_value = maps.iter().rev().fold(i, |acc, map| {
+            let range = map.iter().find(|range| {
+                acc >= range.destination_start && acc < (range.destination_start + range.length)
+            });
+
+            match range {
+                Some(range) => acc + range.source_start - range.destination_start,
+                None => acc,
+            }
+        });
+
+        if ranges
+            .iter()
+            .any(|r| start_value >= r.0 && start_value <= r.1)
+        {
+            return Some(i);
+        }
+    }
+
+    None
 }
 
 #[cfg(test)]
