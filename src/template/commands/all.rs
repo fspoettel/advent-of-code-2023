@@ -64,9 +64,8 @@ pub fn get_path_for_bin(day: Day) -> String {
 /// All solutions live in isolated binaries.
 /// This module encapsulates interaction with these binaries, both invoking them as well as parsing the timing output.
 mod child_commands {
-    use crate::template::Day;
-
     use super::{get_path_for_bin, Error};
+    use crate::template::Day;
     use std::{
         io::{BufRead, BufReader},
         path::Path,
@@ -75,11 +74,7 @@ mod child_commands {
     };
 
     /// Run the solution bin for a given day
-    pub fn run_solution(
-        day: crate::template::Day,
-        is_timed: bool,
-        is_release: bool,
-    ) -> Result<Vec<String>, Error> {
+    pub fn run_solution(day: Day, is_timed: bool, is_release: bool) -> Result<Vec<String>, Error> {
         // skip command invocation for days that have not been scaffolded yet.
         if !Path::new(&get_path_for_bin(day)).exists() {
             return Ok(vec![]);
