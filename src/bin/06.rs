@@ -2,23 +2,20 @@ use itertools::Itertools;
 
 advent_of_code::solution!(6);
 
-fn simulate(times: &[u64], highscores: &[u64]) -> usize {
+fn simulate(times: &[f64], highscores: &[f64]) -> f64 {
     times
         .iter()
         .zip(highscores)
         .map(|(time, highscore)| {
-            (0..=*time)
-                .filter(|i| {
-                    let speed = i;
-                    let time_left = time - i;
-                    speed * time_left > *highscore
-                })
-                .count()
+            let x = time * time - 4.0 * highscore;
+            let a = (time + x.sqrt()) / 2.0;
+            let b = (time - x.sqrt()) / 2.0;
+            a.ceil() - b.floor() - 1.0
         })
         .product()
 }
 
-pub fn part_one(input: &str) -> Option<usize> {
+pub fn part_one(input: &str) -> Option<u32> {
     let mut lines = input.lines().filter_map(|l| {
         l.split_once(':').map(|l| {
             l.1.split_ascii_whitespace()
@@ -27,12 +24,14 @@ pub fn part_one(input: &str) -> Option<usize> {
         })
     });
 
-    lines
-        .next()
-        .and_then(|times| lines.next().map(|highscores| simulate(&times, &highscores)))
+    lines.next().and_then(|times| {
+        lines
+            .next()
+            .map(|highscores| simulate(&times, &highscores) as u32)
+    })
 }
 
-pub fn part_two(input: &str) -> Option<usize> {
+pub fn part_two(input: &str) -> Option<u32> {
     let mut lines = input.lines().filter_map(|l| {
         l.split_once(':').and_then(|l| {
             String::from_iter(l.1.chars().filter(|x| !x.is_whitespace()))
@@ -44,7 +43,7 @@ pub fn part_two(input: &str) -> Option<usize> {
     lines.next().and_then(|time| {
         lines
             .next()
-            .map(|highscore| simulate(&[time], &[highscore]))
+            .map(|highscore| simulate(&[time], &[highscore]) as u32)
     })
 }
 
