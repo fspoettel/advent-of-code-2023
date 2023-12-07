@@ -22,14 +22,15 @@ Solutions for [Advent of Code](https://adventofcode.com/) in [Rust](https://www.
 
 | Day | Part 1 | Part 2 |
 | :---: | :---: | :---:  |
-| [Day 1](./src/bin/01.rs) | `40.1µs` | `152.1µs` |
-| [Day 2](./src/bin/02.rs) | `32.9µs` | `30.9µs` |
-| [Day 3](./src/bin/03.rs) | `157.4µs` | `254.9µs` |
-| [Day 4](./src/bin/04.rs) | `126.7µs` | `122.0µs` |
-| [Day 5](./src/bin/05.rs) | `21.5µs` | `1.5s` |
-| [Day 6](./src/bin/06.rs) | `406.0ns` | `465.0ns` |
+| [Day 1](./src/bin/01.rs) | `42.4µs` | `151.6µs` |
+| [Day 2](./src/bin/02.rs) | `32.0µs` | `29.4µs` |
+| [Day 3](./src/bin/03.rs) | `161.0µs` | `250.1µs` |
+| [Day 4](./src/bin/04.rs) | `130.4µs` | `121.0µs` |
+| [Day 5](./src/bin/05.rs) | `20.1µs` | `1.5s` |
+| [Day 6](./src/bin/06.rs) | `517.0ns` | `530.0ns` |
+| [Day 7](./src/bin/07.rs) | `2.5ms` | `2.6ms` |
 
-**Total: 1500.94ms**
+**Total: 1506.04ms**
 <!--- benchmarking table --->
 
 ---
