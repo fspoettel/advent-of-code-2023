@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 advent_of_code::solution!(7);
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 enum Hand {
     FiveOfKind,
     FourOfKind,
@@ -14,22 +14,7 @@ enum Hand {
     HighCard,
 }
 
-static HAND_RANK: [Hand; 7] = [
-    Hand::FiveOfKind,
-    Hand::FourOfKind,
-    Hand::FullHouse,
-    Hand::ThreeOfKind,
-    Hand::TwoPair,
-    Hand::OnePair,
-    Hand::HighCard,
-];
-
 impl Hand {
-    fn rank(hand: &[usize]) -> usize {
-        let hand = Hand::identify(hand);
-        HAND_RANK.iter().position(|x| *x == hand).unwrap()
-    }
-
     fn identify(hand: &[usize]) -> Hand {
         let mut counts = hand.iter().fold(vec![0; 14], |mut acc, curr| {
             acc[*curr] += 1;
@@ -37,18 +22,19 @@ impl Hand {
         });
 
         let jokers = counts.pop().unwrap();
+        let max = counts.iter().max().unwrap();
 
-        if counts.iter().any(|v| *v + jokers >= 5) {
+        if jokers + max >= 5 {
             Hand::FiveOfKind
-        } else if counts.iter().any(|v| *v + jokers >= 4) {
+        } else if jokers + max >= 4 {
             Hand::FourOfKind
         } else if counts.iter().filter(|x| **x != 0).count() == 2 {
             Hand::FullHouse
-        } else if counts.iter().any(|v| *v + jokers >= 3) {
+        } else if jokers + max >= 3 {
             Hand::ThreeOfKind
         } else if (counts.iter().filter(|v| **v == 2).count() + jokers) >= 2 {
             Hand::TwoPair
-        } else if counts.iter().any(|v| *v + jokers >= 2) {
+        } else if jokers + max >= 2 {
             Hand::OnePair
         } else {
             Hand::HighCard
@@ -56,12 +42,14 @@ impl Hand {
     }
 }
 
-fn sort_by_rank(a: &[usize], b: &[usize]) -> Ordering {
-    let by_rank = Hand::rank(b).cmp(&Hand::rank(a));
+type Parsed = (Vec<usize>, Hand, u32);
+
+fn sort_by_rank(a: &Parsed, b: &Parsed) -> Ordering {
+    let by_rank = b.1.cmp(&a.1);
     if by_rank != std::cmp::Ordering::Equal {
         by_rank
     } else {
-        let (a, b) = a.iter().zip(b).find(|(a, b)| a != b).unwrap();
+        let (a, b) = a.0.iter().zip(&b.0).find(|(a, b)| a != b).unwrap();
         b.cmp(a)
     }
 }
@@ -99,11 +87,12 @@ fn solve(input: &str, allow_jokers: bool) -> u32 {
                 })
                 .collect_vec();
 
-            Some((hand, bet))
+            let identified = Hand::identify(&hand);
+            Some((hand, identified, bet))
         })
-        .sorted_by(|(a, _), (b, _)| sort_by_rank(a, b))
+        .sorted_unstable_by(sort_by_rank)
         .enumerate()
-        .map(|(i, (_, bet))| (i as u32 + 1) * bet)
+        .map(|(i, (_, _, bet))| (i as u32 + 1) * bet)
         .sum()
 }
 
