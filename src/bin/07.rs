@@ -38,7 +38,7 @@ impl Hand {
 
         let jokers = counts.pop().unwrap();
 
-        if jokers == 5 || counts.iter().any(|v| *v + jokers >= 5) {
+        if counts.iter().any(|v| *v + jokers >= 5) {
             Hand::FiveOfKind
         } else if counts.iter().any(|v| *v + jokers >= 4) {
             Hand::FourOfKind
