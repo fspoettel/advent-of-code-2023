@@ -49,6 +49,12 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(steps)
 }
 
+// this works because:
+// - no 'A' is hit after step 0.
+// - one 'A' always hits the same 'Z'.
+// - the 'A'->'Z' path is traversed once, then never again.
+// - all 'Z'->'Z' cycles have the same length for the same node.
+// - all 'A'->'Z' cycles have the same length as the following 'Z'..'Z' cycle.
 pub fn part_two(input: &str) -> Option<usize> {
     let (instructions, graph) = parse(input)?;
 
@@ -74,17 +80,11 @@ pub fn part_two(input: &str) -> Option<usize> {
                 _ => unreachable!(),
             };
 
-            *current = next;
-
             if next.ends_with('Z') {
                 cycle_lengths[i] = steps + 1;
-                // cycles repeat identically, checked:
-                // if cycle_lengths[i] == 0 {
-                //     cycle_lengths[i] = steps + 1;
-                // } else {
-                //     println!("{} repeated cycle at {}. same length?: {}", current, steps + 1, (steps + 1) % cycle_lengths[i] == 0);
-                // }
             }
+
+            *current = next;
         }
 
         steps += 1;
