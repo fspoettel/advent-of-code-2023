@@ -1,3 +1,4 @@
+use advent_of_code::helpers::math::least_common_multiple;
 use hashbrown::HashMap;
 
 advent_of_code::solution!(8);
@@ -21,7 +22,6 @@ fn parse(input: &str) -> Option<(Vec<char>, HashMap<&str, Node>)> {
                 right: &right_s[..right_s.len() - 1],
             },
         );
-
         Some(acc)
     });
 
@@ -49,8 +49,48 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(steps)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let (instructions, graph) = parse(input)?;
+
+    let mut steps = 0;
+
+    let mut current_nodes: Vec<&str> = graph
+        .keys()
+        .filter(|key| key.ends_with('A'))
+        .copied()
+        .collect();
+
+    let mut cycle_lengths = vec![0; current_nodes.len()];
+
+    while cycle_lengths.iter().any(|x| *x == 0) {
+        let instruction = instructions[steps % instructions.len()];
+
+        for (i, current) in current_nodes.iter_mut().enumerate() {
+            let current_node = graph.get(*current).unwrap();
+
+            let next = match instruction {
+                'L' => current_node.left,
+                'R' => current_node.right,
+                _ => unreachable!(),
+            };
+
+            *current = next;
+
+            if next.ends_with('Z') {
+                cycle_lengths[i] = steps + 1;
+                // cycles repeat identically, checked:
+                // if cycle_lengths[i] == 0 {
+                //     cycle_lengths[i] = steps + 1;
+                // } else {
+                //     println!("{} repeated cycle at {}. same length?: {}", current, steps + 1, (steps + 1) % cycle_lengths[i] == 0);
+                // }
+            }
+        }
+
+        steps += 1;
+    }
+
+    Some(least_common_multiple(&cycle_lengths))
 }
 
 #[cfg(test)]
@@ -75,7 +115,9 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        let result = part_two(&advent_of_code::template::read_file_part(
+            "examples", DAY, 3,
+        ));
+        assert_eq!(result, Some(6));
     }
 }
