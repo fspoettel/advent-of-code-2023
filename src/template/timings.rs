@@ -3,6 +3,8 @@ use tinyjson::JsonValue;
 
 use super::Day;
 
+static TIMINGS_FILE_PATH: &str = "./data/timings.json";
+
 /// Represents benchmark times for a single day.
 #[derive(Clone, Debug)]
 pub struct Timing {
@@ -25,12 +27,12 @@ impl Timings {
         let json = JsonValue::from(self.clone());
         let mut bytes = vec![];
         json.format_to(&mut bytes)?;
-        fs::write("./data/timings.json", bytes)
+        fs::write(TIMINGS_FILE_PATH, bytes)
     }
 
     /// Rehydrate timings from a JSON file. If not present, returns empty timings.
     pub fn read_from_file() -> Self {
-        let s = fs::read_to_string("./data/timings.json")
+        let s = fs::read_to_string(TIMINGS_FILE_PATH)
             .map_err(|x| x.to_string())
             .and_then(Timings::try_from);
 
@@ -99,7 +101,7 @@ impl TryFrom<String> for Timings {
         Ok(Timings {
             data: json_data
                 .iter()
-                .filter_map(|value| Timing::try_from(value).ok())
+                .map(|value| Timing::try_from(value).unwrap())
                 .collect(),
         })
     }
@@ -153,24 +155,12 @@ impl TryFrom<&JsonValue> for Timing {
 
         let part_1 = json
             .get("part_1")
-            .and_then(|v| {
-                if v.is_null() {
-                    None
-                } else {
-                    Some(v.get::<String>())
-                }
-            })
+            .map(|v| if v.is_null() { None } else { v.get::<String>() })
             .ok_or("Expected timing.part_1 to be null or string.")?;
 
         let part_2 = json
             .get("part_2")
-            .and_then(|v| {
-                if v.is_null() {
-                    None
-                } else {
-                    Some(v.get::<String>())
-                }
-            })
+            .map(|v| if v.is_null() { None } else { v.get::<String>() })
             .ok_or("Expected timing.part_2 to be null or string.")?;
 
         let total_nanos = json
@@ -184,5 +174,164 @@ impl TryFrom<&JsonValue> for Timing {
             part_2: part_2.cloned(),
             total_nanos,
         })
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+
+#[cfg(feature = "test_lib")]
+mod tests {
+    use crate::day;
+
+    use super::{Timing, Timings};
+
+    fn get_mock_timings() -> Timings {
+        Timings {
+            data: vec![
+                Timing {
+                    day: day!(1),
+                    part_1: Some("10ms".into()),
+                    part_2: Some("20ms".into()),
+                    total_nanos: 3e+10,
+                },
+                Timing {
+                    day: day!(2),
+                    part_1: Some("30ms".into()),
+                    part_2: Some("40ms".into()),
+                    total_nanos: 7e+10,
+                },
+                Timing {
+                    day: day!(4),
+                    part_1: Some("40ms".into()),
+                    part_2: None,
+                    total_nanos: 4e+10,
+                },
+            ],
+        }
+    }
+
+    mod deserialization {
+        use crate::{day, template::timings::Timings};
+
+        #[test]
+        fn test_from_json_ok() {
+            let json = r#"{ "data": [{ "day": "01", "part_1": "1ms", "part_2": null, "total_nanos": 1000000000 }] }"#.to_string();
+            let timings = Timings::try_from(json).unwrap();
+            assert_eq!(timings.data.len(), 1);
+            let timing = timings.data.first().unwrap();
+            assert_eq!(timing.day, day!(1));
+            assert_eq!(timing.part_1, Some("1ms".to_string()));
+            assert_eq!(timing.part_2, None);
+            assert_eq!(timing.total_nanos, 1_000_000_000_f64);
+        }
+
+        #[test]
+        fn test_from_json_empty() {
+            let json = r#"{ "data": [] }"#.to_string();
+            let timings = Timings::try_from(json).unwrap();
+            assert_eq!(timings.data.len(), 0);
+        }
+
+        #[test]
+        #[should_panic]
+        fn test_from_json_malformed() {
+            let json = r#"{}"#.to_string();
+            Timings::try_from(json).unwrap();
+        }
+
+        #[test]
+        #[should_panic]
+        fn test_from_json_malformed_items() {
+            let json = r#"{ "data": [{ "day": "01" }, { "day": "26" }, { "day": "02", "part_2": null, "total_nanos": 0 }] }"#.to_string();
+            Timings::try_from(json).unwrap();
+        }
+    }
+
+    mod serialization {
+        use super::get_mock_timings;
+        use std::collections::HashMap;
+        use tinyjson::JsonValue;
+
+        #[test]
+        fn test_to_json_ok() {
+            let timings = get_mock_timings();
+            let value = JsonValue::try_from(timings).unwrap();
+            assert_eq!(
+                value
+                    .get::<HashMap<String, JsonValue>>()
+                    .unwrap()
+                    .get("data")
+                    .unwrap()
+                    .get::<Vec<JsonValue>>()
+                    .unwrap()
+                    .len(),
+                3
+            );
+        }
+    }
+
+    mod helpers {
+        use crate::{
+            day,
+            template::timings::{Timing, Timings},
+        };
+
+        use super::get_mock_timings;
+
+        #[test]
+        fn test_merge_timings_join() {
+            let timings = get_mock_timings();
+            let other = Timings {
+                data: vec![Timing {
+                    day: day!(3),
+                    part_1: None,
+                    part_2: None,
+                    total_nanos: 0_f64,
+                }],
+            };
+            let merged = timings.merge(&other);
+            assert_eq!(merged.data.len(), 4);
+            assert_eq!(merged.data[0].day, day!(1));
+            assert_eq!(merged.data[1].day, day!(2));
+            assert_eq!(merged.data[2].day, day!(3));
+            assert_eq!(merged.data[3].day, day!(4));
+        }
+
+        #[test]
+        fn test_merge_timings_overwrite() {
+            let timings = get_mock_timings();
+
+            let other = Timings {
+                data: vec![Timing {
+                    day: day!(2),
+                    part_1: None,
+                    part_2: None,
+                    total_nanos: 0_f64,
+                }],
+            };
+            let merged = timings.merge(&other);
+
+            assert_eq!(merged.data.len(), 3);
+            assert_eq!(merged.data[0].day, day!(1));
+            assert_eq!(merged.data[1].day, day!(2));
+            assert_eq!(merged.data[1].total_nanos, 0_f64);
+            assert_eq!(merged.data[2].day, day!(4));
+        }
+
+        #[test]
+        fn test_merge_timings_empty() {
+            let timings = Timings::default();
+            let other = get_mock_timings();
+            let merged = timings.merge(&other);
+            assert_eq!(merged.data.len(), 3);
+        }
+
+        #[test]
+        fn test_merge_timings_other_empty() {
+            let timings = get_mock_timings();
+            let other = Timings::default();
+            let merged = timings.merge(&other);
+            assert_eq!(merged.data.len(), 3);
+        }
     }
 }
