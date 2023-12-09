@@ -62,7 +62,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_part_one() {
+    fn part_one_example() {
         let result = part_one(&advent_of_code::template::read_file_part(
             "examples", DAY, 1,
         ));
@@ -70,7 +70,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part_two() {
+    fn part_two_example() {
         let result = part_two(&advent_of_code::template::read_file_part(
             "examples", DAY, 2,
         ));
