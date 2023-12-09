@@ -10,15 +10,17 @@ publish = false
 [lib]
 doctest = false
 
-[features]
-test_lib = []
-dhat-heap = ["dhat"]
-
 [profile.dhat]
 inherits = "release"
 debug = 1
 
+[features]
+dhat-heap = ["dhat"]
+today = ["chrono"]
+test_lib = []
+
 [dependencies]
+chrono = { version = "0.4.31", optional = true }
 dhat = { version = "0.3.2", optional = true }
 itertools = "0.12.0"
 pico-args = "0.5.0"
