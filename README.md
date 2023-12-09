@@ -25,17 +25,17 @@ Solutions for [Advent of Code](https://adventofcode.com/) in [Rust](https://www.
 
 | Day | Part 1 | Part 2 |
 | :---: | :---: | :---:  |
-| [Day 1](./src/bin/01.rs) | `35.1µs` | `149.5µs` |
-| [Day 2](./src/bin/02.rs) | `31.3µs` | `28.5µs` |
-| [Day 3](./src/bin/03.rs) | `151.4µs` | `254.1µs` |
-| [Day 4](./src/bin/04.rs) | `129.0µs` | `117.0µs` |
-| [Day 5](./src/bin/05.rs) | `21.6µs` | `1.5s` |
-| [Day 6](./src/bin/06.rs) | `389.0ns` | `510.0ns` |
-| [Day 7](./src/bin/07.rs) | `308.0µs` | `275.3µs` |
-| [Day 8](./src/bin/08.rs) | `411.5µs` | `1.4ms` |
-| [Day 9](./src/bin/09.rs) | `212.7µs` | `203.3µs` |
+| [Day 1](./src/bin/01.rs) | `41.1µs` | `154.3µs` |
+| [Day 2](./src/bin/02.rs) | `30.2µs` | `29.6µs` |
+| [Day 3](./src/bin/03.rs) | `148.4µs` | `257.0µs` |
+| [Day 4](./src/bin/04.rs) | `127.1µs` | `122.1µs` |
+| [Day 5](./src/bin/05.rs) | `21.9µs` | `1.5s` |
+| [Day 6](./src/bin/06.rs) | `237.0ns` | `241.0ns` |
+| [Day 7](./src/bin/07.rs) | `278.1µs` | `280.0µs` |
+| [Day 8](./src/bin/08.rs) | `404.6µs` | `1.4ms` |
+| [Day 9](./src/bin/09.rs) | `211.2µs` | `204.4µs` |
 
-**Total: 1503.73ms**
+**Total: 1503.71ms**
 <!--- benchmarking table --->
 
 ---
@@ -153,7 +153,7 @@ This runs all solutions sequentially and prints output to the command-line. Same
 
 #### Update readme benchmarks
 
-The template can output a table with solution times to your readme. In order to generate a benchmarking table, run `cargo time`. If everything goes well, the command will output "_Successfully updated README with benchmarks._" after the execution finishes and the readme will be updated.
+The template can output a table with solution times to your readme. In order to generate a benchmarking table, run `cargo time`. By default, this command checks for missing benchmarks, runs those solutions, and updates the table. If you want to (re-)time all solutions, run `cargo time --force` flag. If you want to (re-)time a specific solution, run `cargo time <day>`.
 
 Please note that these are not "scientific" benchmarks, understand them as a fun approximation. 😉 Timings, especially in the microseconds range, might change a bit between invocations.
 

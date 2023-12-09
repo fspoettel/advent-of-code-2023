@@ -4,7 +4,9 @@ pub mod aoc_cli;
 pub mod commands;
 mod day;
 pub mod readme_benchmarks;
+pub mod run_multi;
 pub mod runner;
+pub mod timings;
 
 pub use day::*;
 

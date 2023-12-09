@@ -1,4 +1,4 @@
-use advent_of_code::template::commands::{all, download, read, scaffold, solve};
+use advent_of_code::template::commands::{all, download, read, scaffold, solve, time};
 use args::{parse, AppArguments};
 
 mod args {
@@ -27,6 +27,10 @@ mod args {
             release: bool,
             time: bool,
         },
+        Time {
+            day: Option<Day>,
+            force: bool,
+        },
     }
 
     pub fn parse() -> Result<AppArguments, Box<dyn std::error::Error>> {
@@ -37,6 +41,14 @@ mod args {
                 release: args.contains("--release"),
                 time: args.contains("--time"),
             },
+            Some("time") => {
+                let force = args.contains("--force");
+
+                AppArguments::Time {
+                    force,
+                    day: args.opt_free_from_str()?,
+                }
+            }
             Some("download") => AppArguments::Download {
                 day: args.free_from_str()?,
             },
@@ -81,6 +93,7 @@ fn main() {
         }
         Ok(args) => match args {
             AppArguments::All { release, time } => all::handle(release, time),
+            AppArguments::Time { day, force } => time::handle(day, force),
             AppArguments::Download { day } => download::handle(day),
             AppArguments::Read { day } => read::handle(day),
             AppArguments::Scaffold { day, download } => {

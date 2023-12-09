@@ -22,3 +22,7 @@ data/inputs/*
 !data/inputs/.keep
 data/puzzles/*
 !data/puzzles/.keep
+
+# Benchmarks
+
+data/timings.json
