@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
@@ -18,11 +19,24 @@ pub static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::
 
 pub type Neighbour = (Direction, Option<Cell>);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq)]
 pub struct Cell {
     pub val: char,
     pub col: usize,
     pub row: usize,
+}
+
+impl PartialEq for Cell {
+    fn eq(&self, other: &Self) -> bool {
+        self.col == other.col && self.row == other.row
+    }
+}
+
+impl Hash for Cell {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.col.hash(state);
+        self.row.hash(state);
+    }
 }
 
 #[derive(Debug)]

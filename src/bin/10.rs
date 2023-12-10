@@ -1,5 +1,5 @@
 use advent_of_code::helpers::matrix::{Cell, Direction, Matrix, Neighbour, CARDINALS};
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use once_cell::sync::Lazy;
 
 advent_of_code::solution!(10);
@@ -40,15 +40,19 @@ static PIPES: Lazy<HashMap<char, Pipe>> = Lazy::new(|| {
     ])
 });
 
-fn find_loop(matrix: &Matrix, start: Cell, start_dir: Direction) -> Option<Vec<Cell>> {
-    let mut visited = vec![start];
+fn try_loop_from_start(
+    matrix: &Matrix,
+    start: Cell,
+    start_dir: Direction,
+) -> Option<HashSet<Cell>> {
+    let mut visited = HashSet::new();
 
     let mut current: Neighbour = (start_dir, matrix.neighbour(&start, &start_dir));
 
     loop {
         match current.1 {
             Some(cell) => {
-                visited.push(cell);
+                visited.insert(cell);
 
                 if cell.val == 'S' {
                     break;
@@ -74,20 +78,49 @@ fn find_loop(matrix: &Matrix, start: Cell, start_dir: Direction) -> Option<Vec<C
     Some(visited)
 }
 
-pub fn part_one(input: &str) -> Option<usize> {
-    let matrix = Matrix::from(input);
+fn loop_from_string(matrix: &Matrix) -> Option<HashSet<Cell>> {
     let start = matrix.items().find(|c| c.val == 'S').unwrap();
-
-    let trail = CARDINALS
+    CARDINALS
         .iter()
-        .find_map(|dir| find_loop(&matrix, start, *dir))
-        .unwrap();
-
-    Some(trail.len() / 2)
+        .find_map(|dir| try_loop_from_start(matrix, start, *dir))
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_one(input: &str) -> Option<usize> {
+    let matrix = Matrix::from(input);
+    loop_from_string(&matrix).map(|pipe| pipe.len() / 2)
+}
+
+pub fn part_two(input: &str) -> Option<usize> {
+    let matrix = Matrix::from(input);
+    let pipe = loop_from_string(&matrix)?;
+
+    Some(
+        matrix
+            .items()
+            .filter(|cell| {
+                if pipe.contains(cell) {
+                    return false;
+                }
+
+                let row = cell.row;
+                let mut crosses = 0;
+
+                (0..cell.col).try_for_each(|col| {
+                    let nb = matrix.get_cell(row, col)?;
+                    // FIXME!
+                    // we need to replace 'S' with the actual value for this to be universal.
+                    // in my input, it's an "F", so checking the bottom values works.
+                    // otherwise we could just as well check `|F7` here.
+                    if "|LJ".contains(nb.val) && pipe.contains(&nb) {
+                        crosses += 1;
+                    }
+                    Some(())
+                });
+
+                crosses % 2 != 0
+            })
+            .count(),
+    )
 }
 
 #[cfg(test)]
@@ -115,8 +148,7 @@ mod tests {
         let result = part_two(&advent_of_code::template::read_file_part(
             "examples", DAY, 3,
         ));
-        // assert_eq!(result, Some(4));
-        assert_eq!(result, None)
+        assert_eq!(result, Some(4));
     }
 
     #[test]
@@ -124,7 +156,22 @@ mod tests {
         let result = part_two(&advent_of_code::template::read_file_part(
             "examples", DAY, 4,
         ));
-        // assert_eq!(result, Some(10));
-        assert_eq!(result, None)
+        assert_eq!(result, Some(4));
+    }
+
+    #[test]
+    fn part_two_example_three() {
+        let result = part_two(&advent_of_code::template::read_file_part(
+            "examples", DAY, 5,
+        ));
+        assert_eq!(result, Some(8));
+    }
+
+    #[test]
+    fn part_two_example_four() {
+        let result = part_two(&advent_of_code::template::read_file_part(
+            "examples", DAY, 6,
+        ));
+        assert_eq!(result, Some(10));
     }
 }
