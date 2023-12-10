@@ -1,97 +1,89 @@
-use advent_of_code::helpers::matrix::{Direction, Matrix, Neighbour};
+use advent_of_code::helpers::matrix::{Cell, Direction, Matrix, Neighbour, CARDINALS};
 use hashbrown::HashMap;
-use itertools::Itertools;
 use once_cell::sync::Lazy;
 
 advent_of_code::solution!(10);
 
-struct Pipe {
-    data: Vec<(Direction, Direction)>,
-}
+type Pipe = Vec<(Direction, Direction)>;
 
-impl Pipe {
-    fn resolve_direction(&self, dir: &Direction) -> Option<Direction> {
-        self.data.iter().find(|y| y.0 == *dir).map(|y| y.1)
-    }
+fn resolve_direction(pipe: &Pipe, dir: &Direction) -> Option<Direction> {
+    pipe.iter().find(|y| y.0 == *dir).map(|y| y.1)
 }
 
 static PIPES: Lazy<HashMap<char, Pipe>> = Lazy::new(|| {
     HashMap::from_iter([
         (
             '|',
-            Pipe {
-                data: vec![(Direction::N, Direction::N), (Direction::S, Direction::S)],
-            },
+            vec![(Direction::N, Direction::N), (Direction::S, Direction::S)],
         ),
         (
             '-',
-            Pipe {
-                data: vec![(Direction::E, Direction::E), (Direction::W, Direction::W)],
-            },
+            vec![(Direction::E, Direction::E), (Direction::W, Direction::W)],
         ),
         (
             'L',
-            Pipe {
-                data: vec![(Direction::S, Direction::E), (Direction::W, Direction::N)],
-            },
+            vec![(Direction::S, Direction::E), (Direction::W, Direction::N)],
         ),
         (
             'J',
-            Pipe {
-                data: vec![(Direction::S, Direction::W), (Direction::E, Direction::N)],
-            },
+            vec![(Direction::S, Direction::W), (Direction::E, Direction::N)],
         ),
         (
             '7',
-            Pipe {
-                data: vec![(Direction::E, Direction::S), (Direction::N, Direction::W)],
-            },
+            vec![(Direction::E, Direction::S), (Direction::N, Direction::W)],
         ),
         (
             'F',
-            Pipe {
-                data: vec![(Direction::N, Direction::E), (Direction::W, Direction::S)],
-            },
+            vec![(Direction::N, Direction::E), (Direction::W, Direction::S)],
         ),
-        ('.', Pipe { data: vec![] }),
+        ('.', vec![]),
     ])
 });
 
-pub fn part_one(input: &str) -> Option<u32> {
-    let matrix = Matrix::from(input);
-    let start = matrix.items().find(|c| c.val == 'S').unwrap();
+fn find_loop(matrix: &Matrix, start: Cell, start_dir: Direction) -> Option<Vec<Cell>> {
+    let mut visited = vec![start];
 
-    let mut i = 1;
-    let mut trails: Vec<Neighbour> = matrix.all_neighbours(start, false).collect_vec();
+    let mut current: Neighbour = (start_dir, matrix.neighbour(&start, &start_dir));
 
     loop {
-        let mut found = false;
+        match current.1 {
+            Some(cell) => {
+                visited.push(cell);
 
-        for trail in trails.iter_mut() {
-            if let Some(cell) = &trail.1 {
                 if cell.val == 'S' {
-                    found = true;
+                    break;
                 }
 
                 let next = PIPES
                     .get(&cell.val)
-                    .and_then(|pipe| pipe.resolve_direction(&trail.0))
-                    .map(|dir| (dir, matrix.neighbour(cell, &dir)));
+                    .and_then(|pipe| resolve_direction(pipe, &current.0))
+                    .map(|next_dir| (next_dir, matrix.neighbour(&cell, &next_dir)));
 
                 if let Some(next) = next {
-                    *trail = next;
+                    current = next;
+                } else {
+                    return None;
                 }
             }
-        }
-
-        if found {
-            break;
-        } else {
-            i += 1;
+            None => {
+                return None;
+            }
         }
     }
 
-    Some(i / 2)
+    Some(visited)
+}
+
+pub fn part_one(input: &str) -> Option<usize> {
+    let matrix = Matrix::from(input);
+    let start = matrix.items().find(|c| c.val == 'S').unwrap();
+
+    let trail = CARDINALS
+        .iter()
+        .find_map(|dir| find_loop(&matrix, start, *dir))
+        .unwrap();
+
+    Some(trail.len() / 2)
 }
 
 pub fn part_two(_input: &str) -> Option<u32> {

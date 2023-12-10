@@ -12,9 +12,9 @@ pub enum Direction {
     NW,
 }
 
-static CARDINALS: [Direction; 4] = [Direction::N, Direction::E, Direction::S, Direction::W];
+pub static CARDINALS: [Direction; 4] = [Direction::N, Direction::E, Direction::S, Direction::W];
 
-static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::SE, Direction::SW];
+pub static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::SE, Direction::SW];
 
 pub type Neighbour = (Direction, Option<Cell>);
 
@@ -68,6 +68,7 @@ impl Matrix {
             .map(|(row, col)| self.get_cell(row, col).unwrap())
     }
 
+    // FIXME: this should return `Neighbour``
     pub fn neighbour(&self, cell: &Cell, dir: &Direction) -> Option<Cell> {
         match dir {
             Direction::NW => {
