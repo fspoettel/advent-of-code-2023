@@ -8,7 +8,7 @@ use super::{
 };
 
 pub fn run_multi(days_to_run: HashSet<Day>, is_release: bool, is_timed: bool) -> Option<Timings> {
-    let mut timings: Vec<Timing> = vec![];
+    let mut timings: Vec<Timing> = Vec::with_capacity(days_to_run.len());
 
     all_days().for_each(|day| {
         if day > 1 {
@@ -208,7 +208,7 @@ pub mod child_commands {
         use crate::day;
 
         #[test]
-        fn test_well_formed() {
+        fn parses_execution_times() {
             let res = parse_exec_time(
                 &[
                     "Part 1: 0 (74.13ns @ 100000 samples)".into(),
@@ -223,7 +223,7 @@ pub mod child_commands {
         }
 
         #[test]
-        fn test_patterns_in_input() {
+        fn parses_with_patterns_in_input() {
             let res = parse_exec_time(
                 &[
                     "Part 1: @ @ @ ( ) ms (2s @ 5 samples)".into(),
@@ -238,7 +238,7 @@ pub mod child_commands {
         }
 
         #[test]
-        fn test_missing_parts() {
+        fn parses_missing_parts() {
             let res = parse_exec_time(
                 &[
                     "Part 1: ✖        ".into(),
