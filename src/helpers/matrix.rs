@@ -1,22 +1,31 @@
 use itertools::Itertools;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
     N,
-    NE,
     E,
-    SE,
     S,
-    SW,
     W,
+    NE,
+    SE,
+    SW,
     NW,
 }
 
+static CARDINALS: [Direction; 4] = [Direction::N, Direction::E, Direction::S, Direction::W];
+
+static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::SE, Direction::SW];
+
+pub type Neighbour = (Direction, Option<Cell>);
+
+#[derive(Debug, Clone, Copy)]
 pub struct Cell {
     pub val: char,
     pub col: usize,
     pub row: usize,
 }
 
+#[derive(Debug)]
 pub struct Matrix {
     pub cells: Vec<Vec<char>>,
     pub cols: usize,
@@ -110,6 +119,34 @@ impl Matrix {
                 Some(Cell { col, row, val })
             }
         }
+    }
+
+    pub fn neighbours(
+        &self,
+        start: Cell,
+        directions: Vec<Direction>,
+    ) -> impl Iterator<Item = Neighbour> + '_ {
+        directions.into_iter().map(move |dir| {
+            let neighbour = self.neighbour(&start, &dir);
+            (dir, neighbour)
+        })
+    }
+
+    pub fn all_neighbours(
+        &self,
+        start: Cell,
+        include_ordinals: bool,
+    ) -> impl Iterator<Item = Neighbour> + '_ {
+        let mut neighbours = Vec::from(CARDINALS);
+
+        if include_ordinals {
+            neighbours.extend(Vec::from(ORDINALS));
+        }
+
+        neighbours.into_iter().map(move |dir| {
+            let neighbour = self.neighbour(&start, &dir);
+            (dir, neighbour)
+        })
     }
 
     pub fn area(
