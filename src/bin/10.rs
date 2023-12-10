@@ -36,7 +36,7 @@ static PIPES: Lazy<HashMap<char, Pipe>> = Lazy::new(|| {
     ])
 });
 
-fn loop_from_string(matrix: &Matrix) -> Option<HashSet<Cell>> {
+fn find_loop(matrix: &Matrix) -> Option<HashSet<Cell>> {
     matrix
         .items()
         .find(|c| c.val == 'S')
@@ -45,7 +45,6 @@ fn loop_from_string(matrix: &Matrix) -> Option<HashSet<Cell>> {
                 .iter()
                 .find_map(|dir| try_loop_from_start(matrix, start_cell, *dir))
         })
-
 }
 
 fn try_loop_from_start(
@@ -87,12 +86,12 @@ fn resolve_direction(pipe: &Pipe, dir: &Direction) -> Option<Direction> {
 
 pub fn part_one(input: &str) -> Option<usize> {
     let matrix = Matrix::from(input);
-    loop_from_string(&matrix).map(|pipe| pipe.len() / 2)
+    find_loop(&matrix).map(|pipe| pipe.len() / 2)
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
     let matrix = Matrix::from(input);
-    let pipe = loop_from_string(&matrix)?;
+    let pipe = find_loop(&matrix)?;
 
     Some(
         matrix
