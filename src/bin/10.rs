@@ -6,10 +6,6 @@ advent_of_code::solution!(10);
 
 type Pipe = Vec<(Direction, Direction)>;
 
-fn resolve_direction(pipe: &Pipe, dir: &Direction) -> Option<Direction> {
-    pipe.iter().find(|y| y.0 == *dir).map(|y| y.1)
-}
-
 static PIPES: Lazy<HashMap<char, Pipe>> = Lazy::new(|| {
     HashMap::from_iter([
         (
@@ -40,49 +36,53 @@ static PIPES: Lazy<HashMap<char, Pipe>> = Lazy::new(|| {
     ])
 });
 
+fn loop_from_string(matrix: &Matrix) -> Option<HashSet<Cell>> {
+    matrix
+        .items()
+        .find(|c| c.val == 'S')
+        .and_then(|start_cell| {
+            CARDINALS
+                .iter()
+                .find_map(|dir| try_loop_from_start(matrix, start_cell, *dir))
+        })
+
+}
+
 fn try_loop_from_start(
     matrix: &Matrix,
     start: Cell,
     start_dir: Direction,
 ) -> Option<HashSet<Cell>> {
     let mut visited = HashSet::new();
-
     let mut current: Neighbour = (start_dir, matrix.neighbour(&start, &start_dir));
 
     loop {
-        match current.1 {
+        let (current_dir, current_cell) = current;
+        match current_cell {
             Some(cell) => {
                 visited.insert(cell);
 
                 if cell.val == 'S' {
-                    break;
+                    return Some(visited);
                 }
 
                 let next = PIPES
                     .get(&cell.val)
-                    .and_then(|pipe| resolve_direction(pipe, &current.0))
+                    .and_then(|pipe| resolve_direction(pipe, &current_dir))
                     .map(|next_dir| (next_dir, matrix.neighbour(&cell, &next_dir)));
 
-                if let Some(next) = next {
-                    current = next;
-                } else {
-                    return None;
+                match next {
+                    Some(next) => current = next,
+                    None => return None,
                 }
             }
-            None => {
-                return None;
-            }
+            None => return None,
         }
     }
-
-    Some(visited)
 }
 
-fn loop_from_string(matrix: &Matrix) -> Option<HashSet<Cell>> {
-    let start = matrix.items().find(|c| c.val == 'S').unwrap();
-    CARDINALS
-        .iter()
-        .find_map(|dir| try_loop_from_start(matrix, start, *dir))
+fn resolve_direction(pipe: &Pipe, dir: &Direction) -> Option<Direction> {
+    pipe.iter().find(|y| y.0 == *dir).map(|y| y.1)
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
