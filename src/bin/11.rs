@@ -1,42 +1,34 @@
+use advent_of_code::helpers::grid::Point;
 use hashbrown::HashSet;
 use itertools::Itertools;
 
 advent_of_code::solution!(11);
-
-#[derive(Debug, Clone)]
-struct Pos(i64, i64);
-
-impl Pos {
-    fn distance(&self, other: &Pos) -> u64 {
-        self.0.abs_diff(other.0) + self.1.abs_diff(other.1)
-    }
-}
 
 fn solve(input: &str, scaling_factor: i64) -> u64 {
     let scaling_factor = scaling_factor - 1;
 
     let mut x_idx: HashSet<i64> = HashSet::new();
     let mut y_idx: HashSet<i64> = HashSet::new();
-    let mut galaxies: Vec<Pos> = vec![];
+    let mut galaxies: Vec<Point<i64>> = vec![];
 
     input.lines().enumerate().for_each(|(y, l)| {
         for (x, c) in l.chars().enumerate() {
             if c == '#' {
                 x_idx.insert(x as i64);
                 y_idx.insert(y as i64);
-                galaxies.push(Pos(x as i64, y as i64));
+                galaxies.push(Point(x as i64, y as i64));
             }
         }
     });
 
     galaxies
         .iter()
-        .map(|pos| {
-            let x_scaling = pos.0 - x_idx.iter().filter(|&&x| x < pos.0).count() as i64;
-            let y_scaling = pos.1 - y_idx.iter().filter(|&&y| y < pos.1).count() as i64;
-            Pos(
-                pos.0 + (scaling_factor * x_scaling),
-                pos.1 + (scaling_factor * y_scaling),
+        .map(|Point(x, y)| {
+            let x_scaling = x - x_idx.iter().filter(|&other_x| other_x < x).count() as i64;
+            let y_scaling = y - y_idx.iter().filter(|&other_y| other_y < y).count() as i64;
+            Point(
+                x + (scaling_factor * x_scaling),
+                y + (scaling_factor * y_scaling),
             )
         })
         .combinations(2)
