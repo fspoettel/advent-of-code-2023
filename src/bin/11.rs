@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 advent_of_code::solution!(11);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Pos(i64, i64);
 
 impl Pos {
@@ -17,19 +17,19 @@ fn solve(input: &str, scaling_factor: i64) -> u64 {
 
     let mut x_idx: HashSet<i64> = HashSet::new();
     let mut y_idx: HashSet<i64> = HashSet::new();
-    let mut unscaled: Vec<Pos> = vec![];
+    let mut galaxies: Vec<Pos> = vec![];
 
     input.lines().enumerate().for_each(|(y, l)| {
         for (x, c) in l.chars().enumerate() {
             if c == '#' {
                 x_idx.insert(x as i64);
                 y_idx.insert(y as i64);
-                unscaled.push(Pos(x as i64, y as i64));
+                galaxies.push(Pos(x as i64, y as i64));
             }
         }
     });
 
-    let scaled: Vec<Pos> = unscaled
+    galaxies
         .iter()
         .map(|pos| {
             let x_scaling = pos.0 - x_idx.iter().filter(|&&x| x < pos.0).count() as i64;
@@ -39,12 +39,8 @@ fn solve(input: &str, scaling_factor: i64) -> u64 {
                 pos.1 + (scaling_factor * y_scaling),
             )
         })
-        .collect();
-
-    scaled
-        .iter()
         .combinations(2)
-        .map(|pair| pair[0].distance(pair[1]))
+        .map(|pair| pair[0].distance(&pair[1]))
         .sum()
 }
 
