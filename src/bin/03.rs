@@ -78,7 +78,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     Some(sum)
 }
 
-fn walk_digits(matrix: &Matrix, cell: Option<Cell>) -> Option<u32> {
+fn walk_digits(matrix: &Matrix<char>, cell: Option<Cell<char>>) -> Option<u32> {
     let cell = cell?;
     if !cell.val.is_ascii_digit() {
         return None;

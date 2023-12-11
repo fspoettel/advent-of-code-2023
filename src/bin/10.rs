@@ -1,4 +1,4 @@
-use advent_of_code::helpers::matrix::{Cell, Direction, Matrix, Neighbour, CARDINALS};
+use advent_of_code::helpers::matrix::{Cell, Direction, Matrix, CARDINALS};
 use hashbrown::{HashMap, HashSet};
 use once_cell::sync::Lazy;
 
@@ -36,9 +36,11 @@ static PIPES: Lazy<HashMap<char, Pipe>> = Lazy::new(|| {
     ])
 });
 
-fn find_loop(matrix: &Matrix) -> Option<HashSet<Cell>> {
-    matrix
-        .items()
+fn find_loop(matrix: &mut Matrix) -> Option<Vec<Cell>> {
+    let items: Vec<Cell> = matrix.items().collect();
+
+    items
+        .into_iter()
         .find(|c| c.val == 'S')
         .and_then(|start_cell| {
             CARDINALS
@@ -48,21 +50,34 @@ fn find_loop(matrix: &Matrix) -> Option<HashSet<Cell>> {
 }
 
 fn try_loop_from_start(
-    matrix: &Matrix,
+    matrix: &mut Matrix,
     start: Cell,
     start_dir: Direction,
-) -> Option<HashSet<Cell>> {
-    let mut visited = HashSet::new();
-    let mut current: Neighbour = (start_dir, matrix.neighbour(&start, &start_dir));
+) -> Option<Vec<Cell>> {
+    let mut visited = vec![];
+
+    let mut current_dir = start_dir;
+    let mut current_cell = matrix.neighbour(&start, &start_dir);
 
     loop {
-        let (current_dir, current_cell) = current;
         match current_cell {
             Some(cell) => {
-                visited.insert(cell);
+                visited.push(cell);
 
                 if cell.val == 'S' {
-                    return Some(visited);
+                    let from = current_dir;
+                    let to = start_dir;
+
+                    let pipe_type = PIPES
+                        .iter()
+                        .find(|pipe| pipe.1.iter().any(|p| *p == (from, to)))
+                        .map(|pipe| *pipe.0)
+                        .unwrap();
+
+                    let c = matrix.get_mut(cell.row, cell.col).unwrap();
+                    *c = pipe_type;
+
+                    break;
                 }
 
                 let next = PIPES
@@ -71,13 +86,18 @@ fn try_loop_from_start(
                     .map(|next_dir| (next_dir, matrix.neighbour(&cell, &next_dir)));
 
                 match next {
-                    Some(next) => current = next,
+                    Some((dir, cell)) => {
+                        current_dir = dir;
+                        current_cell = cell;
+                    }
                     None => return None,
                 }
             }
             None => return None,
         }
     }
+
+    Some(visited)
 }
 
 fn resolve_direction(pipe: &Pipe, dir: &Direction) -> Option<Direction> {
@@ -85,13 +105,13 @@ fn resolve_direction(pipe: &Pipe, dir: &Direction) -> Option<Direction> {
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
-    let matrix = Matrix::from(input);
-    find_loop(&matrix).map(|pipe| pipe.len() / 2)
+    let mut matrix = Matrix::from(input);
+    find_loop(&mut matrix).map(|pipe| pipe.len() / 2)
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
-    let matrix = Matrix::from(input);
-    let pipe = find_loop(&matrix)?;
+    let mut matrix = Matrix::from(input);
+    let pipe: HashSet<Cell> = find_loop(&mut matrix).map(HashSet::from_iter)?;
 
     Some(
         matrix
@@ -106,11 +126,8 @@ pub fn part_two(input: &str) -> Option<usize> {
 
                 (0..cell.col).try_for_each(|col| {
                     let nb = matrix.get_cell(row, col)?;
-                    // FIXME!
-                    // we need to replace 'S' with the actual value for this to be universal.
-                    // in my input, it's an "F", so checking the bottom values works.
-                    // otherwise we could just as well check `|F7` here.
-                    if "|LJ".contains(nb.val) && pipe.contains(&nb) {
+                    // could check `|LJ` as well
+                    if "|F7".contains(nb.val) && pipe.contains(&nb) {
                         crosses += 1;
                     }
                     Some(())

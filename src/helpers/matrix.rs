@@ -15,6 +15,21 @@ pub enum Direction {
     NW,
 }
 
+impl Direction {
+    pub fn invert(&self) -> Direction {
+        match self {
+            Direction::N => Direction::S,
+            Direction::E => Direction::W,
+            Direction::S => Direction::N,
+            Direction::W => Direction::E,
+            Direction::NW => Direction::SE,
+            Direction::NE => Direction::SW,
+            Direction::SE => Direction::NW,
+            Direction::SW => Direction::NE,
+        }
+    }
+}
+
 pub static CARDINALS: [Direction; 4] = [Direction::N, Direction::E, Direction::S, Direction::W];
 
 pub static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::SE, Direction::SW];
@@ -22,37 +37,35 @@ pub static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::
 /* -------------------------------------------------------------------------- */
 
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct Cell {
-    pub val: char,
+pub struct Cell<T: Copy = char> {
+    pub val: T,
     pub col: usize,
     pub row: usize,
 }
 
-impl PartialEq for Cell {
+impl<T: Copy> PartialEq for Cell<T> {
     fn eq(&self, other: &Self) -> bool {
         self.col == other.col && self.row == other.row
     }
 }
 
-impl Hash for Cell {
+impl<T: Copy> Hash for Cell<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.col.hash(state);
         self.row.hash(state);
     }
 }
 
-pub type Neighbour = (Direction, Option<Cell>);
-
 /* -------------------------------------------------------------------------- */
 
 #[derive(Debug)]
-pub struct Matrix {
-    pub cells: Vec<Vec<char>>,
+pub struct Matrix<T: Copy = char> {
+    pub cells: Vec<Vec<T>>,
     pub cols: usize,
     pub rows: usize,
 }
 
-impl From<&str> for Matrix {
+impl From<&str> for Matrix<char> {
     fn from(s: &str) -> Self {
         let cells: Vec<Vec<char>> = s
             .lines()
@@ -73,23 +86,26 @@ impl From<&str> for Matrix {
     }
 }
 
-impl Matrix {
-    pub fn get(&self, row: usize, col: usize) -> Option<char> {
+impl<T: Copy> Matrix<T> {
+    pub fn get(&self, row: usize, col: usize) -> Option<T> {
         self.cells.get(row).and_then(|l| l.get(col).copied())
     }
 
-    pub fn get_cell(&self, row: usize, col: usize) -> Option<Cell> {
+    pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
+        self.cells.get_mut(row).and_then(|l| l.get_mut(col))
+    }
+
+    pub fn get_cell(&self, row: usize, col: usize) -> Option<Cell<T>> {
         self.get(row, col).map(|val| Cell { col, row, val })
     }
 
-    pub fn items(&self) -> impl Iterator<Item = Cell> + '_ {
+    pub fn items(&self) -> impl Iterator<Item = Cell<T>> + '_ {
         (0..self.rows)
             .cartesian_product(0..self.cols)
             .map(|(row, col)| self.get_cell(row, col).unwrap())
     }
 
-    // FIXME: this should return `Neighbour`
-    pub fn neighbour(&self, cell: &Cell, dir: &Direction) -> Option<Cell> {
+    pub fn neighbour(&self, cell: &Cell<T>, dir: &Direction) -> Option<Cell<T>> {
         match dir {
             Direction::NW => {
                 let row = cell.row.checked_sub(1)?;
@@ -144,9 +160,9 @@ impl Matrix {
 
     pub fn neighbours(
         &self,
-        start: Cell,
+        start: Cell<T>,
         directions: Vec<Direction>,
-    ) -> impl Iterator<Item = Neighbour> + '_ {
+    ) -> impl Iterator<Item = (Direction, Option<Cell<T>>)> + '_ {
         directions.into_iter().map(move |dir| {
             let neighbour = self.neighbour(&start, &dir);
             (dir, neighbour)
@@ -155,9 +171,9 @@ impl Matrix {
 
     pub fn all_neighbours(
         &self,
-        start: Cell,
+        start: Cell<T>,
         include_ordinals: bool,
-    ) -> impl Iterator<Item = Neighbour> + '_ {
+    ) -> impl Iterator<Item = (Direction, Option<Cell<T>>)> + '_ {
         let mut neighbours = Vec::from(CARDINALS);
 
         if include_ordinals {
@@ -176,7 +192,7 @@ impl Matrix {
         col_end: usize,
         row_start: usize,
         row_end: usize,
-    ) -> impl Iterator<Item = Cell> + '_ {
+    ) -> impl Iterator<Item = Cell<T>> + '_ {
         (row_start..=row_end)
             .cartesian_product(col_start..=col_end)
             .filter_map(|(row, col)| self.get(row, col).map(|val| Cell { col, row, val }))
