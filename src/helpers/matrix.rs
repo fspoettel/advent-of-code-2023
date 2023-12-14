@@ -91,6 +91,14 @@ impl<T: Copy> Matrix<T> {
         self.cells.get(row).and_then(|l| l.get(col).copied())
     }
 
+    pub fn get_row(&self, row: usize) -> Option<&Vec<T>> {
+        self.cells.get(row)
+    }
+
+    pub fn get_row_mut(&mut self, row: usize) -> Option<&mut Vec<T>> {
+        self.cells.get_mut(row)
+    }
+
     pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
         self.cells.get_mut(row).and_then(|l| l.get_mut(col))
     }
