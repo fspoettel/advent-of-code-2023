@@ -3,7 +3,7 @@ use std::hash::{Hash, Hasher};
 
 /* -------------------------------------------------------------------------- */
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
     N,
     E,
@@ -36,7 +36,7 @@ pub static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::
 
 /* -------------------------------------------------------------------------- */
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Point {
     pub col: usize,
     pub row: usize,
@@ -56,8 +56,7 @@ impl<T: Copy> PartialEq for Cell<T> {
 
 impl<T: Copy> Hash for Cell<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.point.col.hash(state);
-        self.point.row.hash(state);
+        self.point.hash(state);
     }
 }
 

@@ -106,7 +106,9 @@ fn walk_digits(matrix: &Matrix<char>, cell: Option<Cell<char>>) -> Option<u32> {
         }
 
         if walk_right {
-            let c = matrix.get(cell.point.row, cell.point.col + i).unwrap_or('.');
+            let c = matrix
+                .get(cell.point.row, cell.point.col + i)
+                .unwrap_or('.');
             if c.is_ascii_digit() {
                 curr.push_back(c);
             } else {
