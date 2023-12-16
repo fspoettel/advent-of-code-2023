@@ -36,23 +36,28 @@ pub static ORDINALS: [Direction; 4] = [Direction::NW, Direction::NE, Direction::
 
 /* -------------------------------------------------------------------------- */
 
-#[derive(Debug, Clone, Copy, Eq)]
-pub struct Cell<T: Copy = char> {
-    pub val: T,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Point {
     pub col: usize,
     pub row: usize,
 }
 
+#[derive(Debug, Clone, Copy, Eq)]
+pub struct Cell<T: Copy = char> {
+    pub val: T,
+    pub point: Point,
+}
+
 impl<T: Copy> PartialEq for Cell<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.col == other.col && self.row == other.row
+        self.point == other.point
     }
 }
 
 impl<T: Copy> Hash for Cell<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.col.hash(state);
-        self.row.hash(state);
+        self.point.col.hash(state);
+        self.point.row.hash(state);
     }
 }
 
@@ -104,7 +109,10 @@ impl<T: Copy> Matrix<T> {
     }
 
     pub fn get_cell(&self, row: usize, col: usize) -> Option<Cell<T>> {
-        self.get(row, col).map(|val| Cell { col, row, val })
+        self.get(row, col).map(|val| Cell {
+            point: Point { col, row },
+            val,
+        })
     }
 
     pub fn items(&self) -> impl Iterator<Item = Cell<T>> + '_ {
@@ -116,52 +124,76 @@ impl<T: Copy> Matrix<T> {
     pub fn neighbour(&self, cell: &Cell<T>, dir: &Direction) -> Option<Cell<T>> {
         match dir {
             Direction::NW => {
-                let row = cell.row.checked_sub(1)?;
-                let col = cell.col.checked_sub(1)?;
+                let row = cell.point.row.checked_sub(1)?;
+                let col = cell.point.col.checked_sub(1)?;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
             Direction::N => {
-                let col = cell.col;
-                let row = cell.row.checked_sub(1)?;
+                let col = cell.point.col;
+                let row = cell.point.row.checked_sub(1)?;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
             Direction::NE => {
-                let col = cell.col + 1;
-                let row = cell.row.checked_sub(1)?;
+                let col = cell.point.col + 1;
+                let row = cell.point.row.checked_sub(1)?;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
             Direction::W => {
-                let col = cell.col.checked_sub(1)?;
-                let row = cell.row;
+                let col = cell.point.col.checked_sub(1)?;
+                let row = cell.point.row;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
             Direction::E => {
-                let col = cell.col + 1;
-                let row = cell.row;
+                let col = cell.point.col + 1;
+                let row = cell.point.row;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
             Direction::SW => {
-                let col = cell.col.checked_sub(1)?;
-                let row = cell.row + 1;
+                let col = cell.point.col.checked_sub(1)?;
+                let row = cell.point.row + 1;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
             Direction::S => {
-                let row = cell.row + 1;
-                let col = cell.col;
+                let row = cell.point.row + 1;
+                let col = cell.point.col;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
             Direction::SE => {
-                let col = cell.col + 1;
-                let row = cell.row + 1;
+                let col = cell.point.col + 1;
+                let row = cell.point.row + 1;
                 let val = self.get(row, col)?;
-                Some(Cell { col, row, val })
+                Some(Cell {
+                    point: Point { col, row },
+                    val,
+                })
             }
         }
     }
@@ -203,6 +235,11 @@ impl<T: Copy> Matrix<T> {
     ) -> impl Iterator<Item = Cell<T>> + '_ {
         (row_start..=row_end)
             .cartesian_product(col_start..=col_end)
-            .filter_map(|(row, col)| self.get(row, col).map(|val| Cell { col, row, val }))
+            .filter_map(|(row, col)| {
+                self.get(row, col).map(|val| Cell {
+                    point: Point { col, row },
+                    val,
+                })
+            })
     }
 }

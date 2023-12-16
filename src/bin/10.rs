@@ -74,7 +74,7 @@ fn try_loop_from_start(
                         .map(|pipe| *pipe.0)
                         .unwrap();
 
-                    let c = matrix.get_mut(cell.row, cell.col).unwrap();
+                    let c = matrix.get_mut(cell.point.row, cell.point.col).unwrap();
                     *c = pipe_type;
 
                     break;
@@ -121,10 +121,10 @@ pub fn part_two(input: &str) -> Option<usize> {
                     return false;
                 }
 
-                let row = cell.row;
+                let row = cell.point.row;
                 let mut crosses = 0;
 
-                (0..cell.col).try_for_each(|col| {
+                (0..cell.point.col).try_for_each(|col| {
                     let nb = matrix.get_cell(row, col)?;
                     // could check `|LJ` as well
                     if "|F7".contains(nb.val) && pipe.contains(&nb) {

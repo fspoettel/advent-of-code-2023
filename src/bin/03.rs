@@ -16,13 +16,13 @@ pub fn part_one(input: &str) -> Option<u32> {
             curr.push(cell.val);
         }
 
-        if (!is_digit || cell.col == matrix.cols - 1) && !curr.is_empty() {
+        if (!is_digit || cell.point.col == matrix.cols - 1) && !curr.is_empty() {
             if matrix
                 .area(
-                    (cell.col - curr.len()).saturating_sub(1),
-                    cell.col,
-                    cell.row.saturating_sub(1),
-                    cell.row + 1,
+                    (cell.point.col - curr.len()).saturating_sub(1),
+                    cell.point.col,
+                    cell.point.row.saturating_sub(1),
+                    cell.point.row + 1,
                 )
                 .any(|cell| !cell.val.is_ascii_digit() && cell.val != '.')
             {
@@ -92,9 +92,10 @@ fn walk_digits(matrix: &Matrix<char>, cell: Option<Cell<char>>) -> Option<u32> {
     while walk_left || walk_right {
         if walk_left {
             let c = cell
+                .point
                 .col
                 .checked_sub(i)
-                .and_then(|col| matrix.get(cell.row, col))
+                .and_then(|col| matrix.get(cell.point.row, col))
                 .unwrap_or('.');
 
             if c.is_ascii_digit() {
@@ -105,7 +106,7 @@ fn walk_digits(matrix: &Matrix<char>, cell: Option<Cell<char>>) -> Option<u32> {
         }
 
         if walk_right {
-            let c = matrix.get(cell.row, cell.col + i).unwrap_or('.');
+            let c = matrix.get(cell.point.row, cell.point.col + i).unwrap_or('.');
             if c.is_ascii_digit() {
                 curr.push_back(c);
             } else {
