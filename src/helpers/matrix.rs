@@ -241,4 +241,31 @@ impl<T: Copy> Matrix<T> {
                 })
             })
     }
+
+    pub fn transpose(&mut self) {
+        let mut res = vec![vec![]; self.rows];
+
+        self.cells.iter().for_each(|row| {
+            for (i, val) in row.iter().enumerate() {
+                res[i].push(*val);
+            }
+        });
+
+        self.cells = res;
+    }
+
+    pub fn rotate_clockwise(&mut self) {
+        self.transpose();
+        self.cells.iter_mut().for_each(|row| {
+            row.reverse();
+        })
+    }
+
+    pub fn rotate_counterclockwise(&mut self) {
+        self.cells.iter_mut().for_each(|row| {
+            row.reverse();
+        });
+
+        self.transpose();
+    }
 }
