@@ -1,6 +1,18 @@
-use advent_of_code::helpers::strings::transpose;
-
 advent_of_code::solution!(13);
+
+fn transpose(input: &str) -> Vec<String> {
+    let lines: Vec<&str> = input.lines().collect();
+
+    let mut columns: Vec<String> = vec![String::new(); lines.first().map(|x| x.len()).unwrap()];
+
+    lines.iter().for_each(|l| {
+        for (i, c) in l.chars().enumerate() {
+            columns[i].push(c);
+        }
+    });
+
+    columns
+}
 
 pub fn differs_by_max_or_less(a: &str, b: &str, max: usize) -> Option<usize> {
     let mut differences = 0;
