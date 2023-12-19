@@ -1,5 +1,8 @@
 use itertools::Itertools;
-use std::hash::{Hash, Hasher};
+use std::{
+    fmt::Display,
+    hash::{Hash, Hasher},
+};
 
 /* -------------------------------------------------------------------------- */
 
@@ -43,20 +46,26 @@ pub struct Point {
 }
 
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct Cell<T: Copy = char> {
+pub struct Cell<T: Copy + Display = char> {
     pub val: T,
     pub point: Point,
 }
 
-impl<T: Copy> PartialEq for Cell<T> {
+impl<T: Copy + Display> PartialEq for Cell<T> {
     fn eq(&self, other: &Self) -> bool {
         self.point == other.point
     }
 }
 
-impl<T: Copy> Hash for Cell<T> {
+impl<T: Copy + Display> Hash for Cell<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.point.hash(state);
+    }
+}
+
+impl<T: Copy + Display> Display for Cell<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}:{}] ({})", self.point.col, self.point.row, self.val)
     }
 }
 
@@ -111,7 +120,7 @@ impl From<&str> for Matrix<u32> {
     }
 }
 
-impl<T: Copy> Matrix<T> {
+impl<T: Copy + Display> Matrix<T> {
     pub fn get(&self, row: usize, col: usize) -> Option<T> {
         self.cells.get(row).and_then(|l| l.get(col).copied())
     }
