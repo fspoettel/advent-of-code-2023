@@ -1,6 +1,6 @@
 use hashbrown::HashMap;
 
-advent_of_code::solution!(20, 1);
+advent_of_code::solution!(20);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum PulseType {
@@ -33,6 +33,8 @@ struct QueueItem<'a>(&'a str, &'a str, PulseType);
 struct States<'a> {
     data: HashMap<&'a str, NodeState<'a>>,
     queue: Vec<QueueItem<'a>>,
+    cycles: HashMap<&'a str, usize>,
+    cycle_count: usize,
 }
 
 impl<'a> States<'a> {
@@ -43,7 +45,7 @@ impl<'a> States<'a> {
         let pulses: Vec<QueueItem> = self.queue.drain(0..).collect();
 
         for QueueItem(target, destination, pulse_type) in pulses {
-            let (low, high) = self.send_pulse(&nodes, target, destination, pulse_type);
+            let (low, high) = self.send_pulse(nodes, target, destination, pulse_type);
             pulse_count_low += low;
             pulse_count_high += high;
         }
@@ -58,6 +60,10 @@ impl<'a> States<'a> {
         target: &'a str,
         pulse_type: PulseType,
     ) -> (u64, u64) {
+        if sender == "button" {
+            self.cycle_count += 1;
+        }
+
         if let Some(node) = nodes.data.get(target) {
             let node_state = self.data.get_mut(target).unwrap();
 
@@ -90,6 +96,7 @@ impl<'a> States<'a> {
                     let pulse = if current.values().all(|v| *v == PulseType::High) {
                         PulseType::Low
                     } else {
+                        self.cycles.insert(target, self.cycle_count);
                         PulseType::High
                     };
 
@@ -177,7 +184,45 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(pulse_count_low * pulse_count_high)
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
+pub fn part_two(input: &str) -> Option<usize> {
+    let (nodes, mut states) = parse(input);
+
+    let target = "rx";
+
+    // INVARIANT: the parent of target is a conjunction, which in turn, has conjunctions as parents.
+    // find the parent and then all grandparents.
+    let parent = nodes
+        .data
+        .values()
+        .find(|n| n.destinations.contains(&target))?;
+    let grandparents: Vec<&str> = nodes
+        .data
+        .values()
+        .filter(|n| n.destinations.contains(&parent.id))
+        .map(|n| n.id)
+        .collect();
+
+    for _ in 0..usize::MAX {
+        states
+            .queue
+            .push(QueueItem("button", "broadcaster", PulseType::Low));
+
+        while !states.queue.is_empty() {
+            states.drain_queue(&nodes);
+        }
+
+        let grandparent_cycles: Vec<usize> = states
+            .cycles
+            .iter()
+            .filter(|(key, _)| grandparents.contains(*key))
+            .map(|(_, val)| *val)
+            .collect();
+
+        if grandparent_cycles.len() == grandparents.len() {
+            return Some(grandparent_cycles.iter().product());
+        }
+    }
+
     None
 }
 
