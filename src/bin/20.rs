@@ -1,3 +1,4 @@
+use advent_of_code::helpers::math::least_common_multiple;
 use hashbrown::HashMap;
 
 advent_of_code::solution!(20);
@@ -21,20 +22,17 @@ struct Node<'a> {
     destinations: Vec<&'a str>,
 }
 
-#[derive(Debug, Default)]
-struct Nodes<'a> {
-    data: HashMap<&'a str, Node<'a>>,
-}
+type Nodes<'a> = HashMap<&'a str, Node<'a>>;
 
 #[derive(Debug)]
 struct QueueItem<'a>(&'a str, &'a str, PulseType);
 
 #[derive(Debug, Default)]
 struct States<'a> {
+    cycle_count: usize,
+    cycles: HashMap<&'a str, usize>,
     data: HashMap<&'a str, NodeState<'a>>,
     queue: Vec<QueueItem<'a>>,
-    cycles: HashMap<&'a str, usize>,
-    cycle_count: usize,
 }
 
 impl<'a> States<'a> {
@@ -43,7 +41,6 @@ impl<'a> States<'a> {
         let mut pulse_count_high = 0;
 
         let pulses: Vec<QueueItem> = self.queue.drain(0..).collect();
-
         for QueueItem(target, destination, pulse_type) in pulses {
             let (low, high) = self.send_pulse(nodes, target, destination, pulse_type);
             pulse_count_low += low;
@@ -60,11 +57,12 @@ impl<'a> States<'a> {
         target: &'a str,
         pulse_type: PulseType,
     ) -> (u64, u64) {
+        // try turning it on and off again.
         if sender == "button" {
             self.cycle_count += 1;
         }
 
-        if let Some(node) = nodes.data.get(target) {
+        if let Some(node) = nodes.get(target) {
             let node_state = self.data.get_mut(target).unwrap();
 
             match node_state {
@@ -143,7 +141,7 @@ fn parse(input: &str) -> (Nodes, States) {
             (Nodes::default(), States::default()),
             |mut acc, (node, node_state)| {
                 acc.1.data.insert(node.id, node_state);
-                acc.0.data.insert(node.id, node);
+                acc.0.insert(node.id, node);
                 acc
             },
         );
@@ -151,7 +149,6 @@ fn parse(input: &str) -> (Nodes, States) {
     states.data.iter_mut().for_each(|(key, val)| {
         if let NodeState::Conjunction(state) = val {
             nodes
-                .data
                 .values()
                 .filter(|n| n.destinations.contains(key))
                 .for_each(|n| {
@@ -191,12 +188,9 @@ pub fn part_two(input: &str) -> Option<usize> {
 
     // INVARIANT: the parent of target is a conjunction, which in turn, has conjunctions as parents.
     // find the parent and then all grandparents.
-    let parent = nodes
-        .data
-        .values()
-        .find(|n| n.destinations.contains(&target))?;
+    let parent = nodes.values().find(|n| n.destinations.contains(&target))?;
+
     let grandparents: Vec<&str> = nodes
-        .data
         .values()
         .filter(|n| n.destinations.contains(&parent.id))
         .map(|n| n.id)
@@ -219,7 +213,7 @@ pub fn part_two(input: &str) -> Option<usize> {
             .collect();
 
         if grandparent_cycles.len() == grandparents.len() {
-            return Some(grandparent_cycles.iter().product());
+            return Some(least_common_multiple(&grandparent_cycles));
         }
     }
 
