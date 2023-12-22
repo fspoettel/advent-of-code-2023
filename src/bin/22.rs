@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
 advent_of_code::solution!(22);
@@ -45,17 +45,21 @@ impl Brick {
         self.start.z.min(self.end.z)..=self.start.z.max(self.end.z)
     }
 
-    fn rests_on(&self, other: &Brick) -> bool {
+    fn overlaps(&self, other: &Brick) -> bool {
         let self_x = self.x_bounds();
         let self_y = self.y_bounds();
-        let self_z = self.z_bounds();
         let other_x = other.x_bounds();
         let other_y = other.y_bounds();
-        let other_z = other.z_bounds();
         let x_overlap = self_x.start() <= other_x.end() && self_x.end() >= other_x.start();
         let y_overlap = self_y.start() <= other_y.end() && self_y.end() >= other_y.start();
+        x_overlap && y_overlap
+    }
+
+    fn rests_on(&self, other: &Brick) -> bool {
+        let self_z = self.z_bounds();
+        let other_z = other.z_bounds();
         let adjacent_z = *self_z.start() == other_z.end() + 1;
-        adjacent_z && (x_overlap && y_overlap)
+        adjacent_z && self.overlaps(other)
     }
 }
 
@@ -80,26 +84,26 @@ fn parse(input: &str) -> Vec<Brick> {
         .collect()
 }
 
-fn simulate_falling(bricks: &mut [Brick]) {
-    bricks.sort_by_key(|brick| brick.start.z);
-    bricks.reverse();
+fn simulate_falling(bricks: &mut [Brick]) -> usize {
+    let mut moved: HashSet<usize> = HashSet::new();
 
     loop {
         let mut any_moved = false;
 
         for i in 0..bricks.len() {
             let mut is_resting = false;
+            let brick_edge = *bricks[i].z_bounds().start();
 
             for j in 0..bricks.len() {
                 let other = &bricks[j];
-
-                if bricks[i].rests_on(other) || *bricks[i].z_bounds().start() == 1 {
+                if brick_edge == 1 || bricks[i].rests_on(other) {
                     is_resting = true;
                     break;
                 }
             }
 
             if !is_resting {
+                moved.insert(bricks[i].id);
                 any_moved = true;
                 bricks[i].end.z -= 1;
                 bricks[i].start.z -= 1;
@@ -110,6 +114,8 @@ fn simulate_falling(bricks: &mut [Brick]) {
             break;
         }
     }
+
+    moved.len()
 }
 
 fn build_graph(bricks: &[Brick]) -> HashMap<usize, Vec<usize>> {
@@ -148,8 +154,19 @@ pub fn part_one(input: &str) -> Option<usize> {
     )
 }
 
-pub fn part_two(_input: &str) -> Option<usize> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let mut total = 0;
+
+    let mut bricks = parse(input);
+    simulate_falling(&mut bricks);
+
+    for i in 0..bricks.len() {
+        let mut bricks_i = bricks.clone();
+        bricks_i.remove(i);
+        total += simulate_falling(&mut bricks_i);
+    }
+
+    Some(total)
 }
 
 #[cfg(test)]
@@ -165,7 +182,6 @@ mod tests {
     #[test]
     fn part_two_example() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        // assert_eq!(result, Some(7));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(7));
     }
 }
