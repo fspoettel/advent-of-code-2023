@@ -65,7 +65,7 @@ impl<T: Copy + Display> Hash for Cell<T> {
 
 impl<T: Copy + Display> Display for Cell<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}:{}] ({})", self.point.col, self.point.row, self.val)
+        write!(f, "[{}:{}] {}", self.point.row, self.point.col, self.val)
     }
 }
 
